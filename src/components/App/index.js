@@ -1,11 +1,11 @@
 import React, {Component} from 'react';
 import axios from 'axios';
-import { sortBy } from 'lodash';
+import { library } from '@fortawesome/fontawesome-svg-core';
+import { faArrowUp, faArrowDown } from '@fortawesome/free-solid-svg-icons';
 
 import Button from '../Button'
 import Search from '../Search'
 import Table from '../Table'
-import Loading from '../Loading'
 import withLoading from '../withLoading';
 
 import './index.css';
@@ -19,6 +19,7 @@ import {
     PARAM_HPP,
 } from '../../constants/';
 
+library.add(faArrowUp, faArrowDown);
 
 const ButtonWithLoading = withLoading(Button);
 
@@ -32,14 +33,16 @@ class App extends Component {
             searchTerm: DEFAULT_QUERY,
             error: null,
             isLoading: false,
-            sortKey: 'NONE'
+            sortKey: 'NONE',
+            isSortReverse: false,
         };
 
     }
 
     onSort = sortKey => {
-        this.setState({ sortKey })
-    }
+        const isSortReverse = this.state.sortKey === sortKey && !this.state.isSortReverse;
+        this.setState({ sortKey, isSortReverse })
+    };
 
     onDismiss = id => {
         const { searchKey, results } = this.state;
@@ -82,11 +85,8 @@ class App extends Component {
             .catch(error => this.setState({ error }));
     };
 
-    setSearchTopStories = result => {
-        const {hits, page} = result;
-        const { searchKey, results } = this.state;
-
-
+    updateSearchTopStoriesState = (hits, page) => (prevState) => {
+        const { searchKey, results } = prevState;
 
         const oldHits = results && results[searchKey] ? results[searchKey].hits : [];
         const updatedHits = [
@@ -94,14 +94,19 @@ class App extends Component {
             ...hits
         ];
 
-        this.setState({
+        return {
             results: {
                 ...results,
                 [searchKey]: { hits: updatedHits, page},
             },
             isLoading: false
-        })
-    }
+        };
+    };
+
+    setSearchTopStories = result => {
+        const {hits, page} = result;
+        this.setState(this.updateSearchTopStoriesState(hits, page));
+    };
 
     componentDidMount() {
         const {searchTerm} = this.state
@@ -118,7 +123,8 @@ class App extends Component {
             searchKey,
             error,
             isLoading,
-            sortKey
+            sortKey,
+            isSortReverse
         } = this.state;
 
 
@@ -144,6 +150,7 @@ class App extends Component {
                         list={list}
                         sortKey={sortKey}
                         onSort={this.onSort}
+                        isSortReverse={isSortReverse}
                         onDismiss={this.onDismiss}/>
                 }
                 <div className={"interactions"}>

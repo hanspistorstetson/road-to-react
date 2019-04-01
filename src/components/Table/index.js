@@ -1,6 +1,9 @@
 import React, { Component } from 'react';
 import { sortBy } from 'lodash';
 import PropTypes from 'prop-types';
+import classNames from 'classnames';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+
 
 import Button from '../Button'
 
@@ -24,21 +27,30 @@ const SORTS = {
 
 class Table extends Component {
     render() {
-        const {list, onDismiss, sortKey, onSort} = this.props;
+        const {list, onDismiss, sortKey, onSort, isSortReverse } = this.props;
+        const sortedList = SORTS[sortKey](list);
+        const orderedSortedList = isSortReverse ? sortedList.reverse() : sortedList;
         return (
             <div className="table">
                 <div className={'table-header'}>
                     <span style={{ width: '40%'}}>
-                        <Sort sortKey={'TITLE'} onSort={onSort}>Title</Sort>
+                        <Sort
+                            sortKey={'TITLE'}
+                            onSort={onSort}
+                            activeSortKey={sortKey}
+                            isSortReverse={isSortReverse}
+                        >
+                            Title
+                        </Sort>
                     </span>
                     <span style={{ width: '30%' }}>
-                        <Sort sortKey={'AUTHOR'} onSort={onSort}>Author</Sort>
+                        <Sort sortKey={'AUTHOR'} onSort={onSort} activeSortKey={sortKey} isSortReverse={isSortReverse}>Author</Sort>
                     </span>
                     <span style={{ width: '10%' }}>
-                        <Sort sortKey={'COMMENTS'} onSort={onSort}>Comments</Sort>
+                        <Sort sortKey={'COMMENTS'} onSort={onSort} activeSortKey={sortKey} isSortReverse={isSortReverse}>Comments</Sort>
                     </span>
                     <span style={{ width: '10%' }}>
-                        <Sort sortKey={'POINTS'} onSort={onSort}>Points</Sort>
+                        <Sort sortKey={'POINTS'} onSort={onSort} activeSortKey={sortKey} isSortReverse={isSortReverse}>Points</Sort>
                     </span>
                     <span style={{width: '10%' }}>
                         Archive
@@ -46,7 +58,7 @@ class Table extends Component {
                 </div>
 
 
-                {SORTS[sortKey](list).map(item => {
+                {orderedSortedList.map(item => {
                     return (
                         <div key={item.objectID} className="table-row">
                             <span style={largeColumn}>
@@ -73,7 +85,21 @@ class Table extends Component {
     }
 }
 
-const Sort = ({ sortKey, onSort, children }) => <Button onClick={() => onSort(sortKey)} className={"button-inline"}>{children}</Button>;
+const Sort = ({ sortKey, onSort, activeSortKey, isSortReverse, children }) =>{
+    const sortClass = classNames(
+        'button-inline',
+        { 'button-active': sortKey === activeSortKey}
+    );
+
+    const arrowIcon = isSortReverse ? 'arrow-down' : 'arrow-up';
+
+
+    return (
+        <Button onClick={() => onSort(sortKey)} className={sortClass}>
+            {children} { sortKey === activeSortKey ? <FontAwesomeIcon icon={arrowIcon} /> : null}
+        </Button>
+    );
+};
 
 Table.propTypes = {
     list: PropTypes.arrayOf(
